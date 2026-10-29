@@ -1,0 +1,6 @@
+{
+  "name": "Aether OS 18",
+  "description": "A futuristic iPhone 18-inspired mobile interface & system experience for Android featuring Lock Screen, Dynamic Capsule, Control Center, Notification Center, and App Library.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
