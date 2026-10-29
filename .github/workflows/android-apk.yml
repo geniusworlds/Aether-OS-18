@@ -22,6 +22,9 @@ jobs:
     name: Compile, Run Tests & Package Installable APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
     steps:
       - name: Checkout Repository
@@ -33,11 +36,16 @@ jobs:
           distribution: "temurin"
           java-version: "21"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Accept Android SDK Licenses
-        run: yes | sdkmanager --licenses || true
+      - name: Install Android SDK packages and accept licenses
+        shell: bash
+        run: |
+          SDKMANAGER="$(find "${ANDROID_HOME}/cmdline-tools" -type f -name sdkmanager -print -quit)"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "::error::Android SDK sdkmanager was not found under ${ANDROID_HOME}/cmdline-tools."
+            exit 1
+          fi
+          yes | "$SDKMANAGER" --licenses >/dev/null
+          "$SDKMANAGER" --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
@@ -46,7 +54,6 @@ jobs:
 
       - name: Prepare Keystore & Environment Files
         run: |
-          # 1. Restore debug.keystore from debug.keystore.base64 (since debug.keystore is in .gitignore)
           if [ ! -f "debug.keystore" ]; then
             if [ -f "debug.keystore.base64" ]; then
               echo "Decoding debug.keystore from debug.keystore.base64..."
@@ -65,7 +72,6 @@ jobs:
             fi
           fi
 
-          # 2. Ensure .env file exists for Secrets Gradle Plugin
           if [ ! -f ".env" ] && [ -f ".env.example" ]; then
             cp .env.example .env
           fi
